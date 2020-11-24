@@ -90,6 +90,13 @@ char	*get_line(char **buffer, int *flag)
 	return (dest);
 }
 
+int		error_string(char **line)
+{
+	*line = malloc(1);
+	*line[0] = '\0';
+	return (-1);
+}
+
 int		get_next_line(int fd, char **line)
 {
 	static char		*buffer = 0;
@@ -111,6 +118,8 @@ int		get_next_line(int fd, char **line)
 			if (is_newline(buffer))
 				break ;
 		}
+		if (ret == -1 || (!buffer && ret == 0))
+			return (error_string(line));
 	}
 	*line = get_line(&buffer, &flag);
 	return (!ret && !flag) ? 0 : 1;
