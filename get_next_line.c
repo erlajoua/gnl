@@ -35,7 +35,7 @@ static int      ft_manage_rest(t_gnl *s, char **line, char **buffer)
     {
         if ((*line = ft_strjoin(*line, *buffer)) == NULL)
             return (-1);
-        ft_bzero(*buffer, BUFFER_SIZE);
+        ft_bzero(*buffer, BUFFER_SIZE + 1);
         return (1);
     }
     else
@@ -86,11 +86,15 @@ static int     ft_read(int fd, t_gnl *s, char **line)
     int ret;
 
     ret = 0;
-    *line = malloc(1);
-    *line[0] = '\0';
     if (!(buffer = malloc(BUFFER_SIZE + 1)))
         return (-1);
     ft_bzero(buffer, BUFFER_SIZE + 1);
+    if (!(*line = malloc(1)))
+	{
+		free(buffer);
+		return (-1);
+	}
+    *line[0] = '\0';
     while (ret != 2)
     {
         ret = ft_rest(s, &buffer, fd, line);
@@ -109,21 +113,8 @@ int     get_next_line(int fd, char **line)
     static t_gnl s;
     int ret;
 
+	if (read(fd, 0, 0) < 0 || fd < 0 || BUFFER_SIZE <= 0 || !line)
+		return (-1);
     ret = ft_read(fd, &s, line);
     return (ret);
-}
-
-int main(void)
-{
-    int fd;
-    int ret;
-    char *line;
-    fd = open("test.txt", O_RDONLY);
-    if (!fd)
-        return (-1);
-    while ((ret = get_next_line(fd, &line)) > 0)
-        printf("%d -> %s\n", ret, line);
-    printf("%d -> %s\n", ret, line);
-    close(fd);
-    return (0);
 }
