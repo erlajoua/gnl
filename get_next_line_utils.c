@@ -1,3 +1,15 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   get_next_line_utils.c                              :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: erlajoua <erlajoua@student.42.fr>          +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2020/11/25 13:54:13 by erlajoua          #+#    #+#             */
+/*   Updated: 2020/11/25 13:55:27 by erlajoua         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #include "get_next_line.h"
 
 char	*ft_strcpy(char *dest, char *src)
@@ -28,14 +40,13 @@ void	ft_bzero(void *s, size_t n)
 
 int		ft_strlen(char *str)
 {
-	size_t i;
+	int	i;
 
 	i = 0;
 	while (str[i])
 		i++;
 	return (i);
 }
-
 
 char	*ft_getline(char *str)
 {
