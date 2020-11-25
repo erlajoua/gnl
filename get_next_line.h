@@ -10,13 +10,14 @@
 # include <fcntl.h>
 # include <string.h>
 
-int		get_next_line(int fd, char **line);
-char	*get_line(char **buffer, int *flag);
-char	*ft_firstline(char **str, int *keepgoing);
-char	*ft_strjoin(char *s1, char *s2);
-int		error(int fd, char *line);
-int		is_newline(char *str);
-char	*ft_strdup(char *str);
-int		ft_strlen(char *str);
+int     ft_strlen(char *str);
+void	ft_bzero(void *s, size_t n);
+
+struct s_gnl
+{
+    char *reste;
+    int nb_bytes;
+};
+typedef	struct s_gnl t_gnl;
 
 #endif
