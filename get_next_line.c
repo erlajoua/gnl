@@ -101,13 +101,13 @@ static int     ft_read(int fd, t_gnl *s, char **line)
         if (ret <= 0)
         {
             free(buffer);
-            return (-1);
+            return (ret);
         }
     }
     free(buffer);
     return (s->nb_bytes > 0 || s->rest) ? 1 : 0;
 }
-
+//checked
 int     get_next_line(int fd, char **line)
 {
     static t_gnl s;
