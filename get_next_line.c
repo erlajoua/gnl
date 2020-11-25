@@ -1,162 +1,129 @@
 #include "get_next_line.h"
 
-int ft_strlen(char *str)
+char	*ft_getrest(char *str, int *empty_rest)
 {
-    int i;
+	char *rest;
 
-    i = 0;
-    while (str[i])
-        i++;
-    return (i);
+	*empty_rest = 0;
+	while (*str != '\0')
+	{
+		if (*str == '\n')
+		{
+			str++;
+			if (!(rest = (char*)malloc(sizeof(char) * ft_strlen(str) + 1)))
+				return (NULL);
+			rest = ft_strcpy(rest, str);
+			return (rest);
+		}
+		str++;
+	}
+	*empty_rest = 1;
+	return (NULL);
 }
 
-char *ft_strjoin(char const *s1, char const *s2)
+static int      ft_manage_rest(t_gnl *s, char **line, char **buffer)
 {
-    char *str1;
-    char *str2;
-    char *dest;
-    int i;
-    int j;
+    char    *rest;
+    char    *subline;
+    int     empty_rest;
 
-    if (!s1 || !s2)
-        return (NULL);
-    str1 = (char *)s1;
-    str2 = (char *)s2;
-    i = -1;
-    j = -1;
-    if (!(dest = malloc(sizeof(char *) * (ft_strlen(str1) + ft_strlen(str2)))))
-        return (NULL);
-    while (str1[++i])
-        dest[i] = str1[i];
-    while (str2[++j])
-        dest[i + j] = str2[j];
-    dest[i + j] = '\0';
-    return (dest);
-}
-
-char *ft_strcpy(char *dest, char *src)
-{
-    int i;
-
-    i = 0;
-    while (src[i])
+    empty_rest = 0;
+    rest = ft_getrest(*buffer, &empty_rest);
+    if (rest == NULL && empty_rest == 0)
+        return (-1);
+    if (empty_rest == 1)
     {
-        dest[i] = src[i];
-        i++;
+        if ((*line = ft_strjoin(*line, *buffer)) == NULL)
+            return (-1);
+        ft_bzero(*buffer, BUFFER_SIZE);
+        return (1);
     }
-    dest[i] = src[i];
-    return (dest);
-}
-
-void ft_bzero(void *s, size_t n)
-{
-    unsigned char *ptr;
-
-    ptr = (unsigned char *)s;
-    while (n > 0)
+    else
     {
-        *(ptr++) = 0;
-        n--;
-    }
-}
-
-char *ft_get_subline(char *buffer)
-{
-    int i;
-    char *dest;
-
-    i = 0;
-    while (buffer[i] != '\n' && buffer[i])
-        i++;
-    dest = (char *)malloc(sizeof(char) * i + 1);
-    i = 0;
-    while (buffer[i] != '\n' && buffer[i])
-    {
-        dest[i] = buffer[i];
-        i++;
-    }
-    dest[i] = '\0';
-    return (dest);
-}
-
-char *ft_get_rest(char *buffer)
-{
-    int i;
-
-    i = 0;
-    while (buffer[i] != '\0')
-    {
-        if (buffer[i] == '\n')
-            return (&buffer[i + 1]);
-        i++;
-    }
-    return (0);
-}
-
-static int ft_read(int fd, t_gnl *p, char **line)
-{
-    char *buffer;
-    char *rest;
-    char *subline;
-    buffer = malloc(sizeof(char) * BUFFER_SIZE + 1);
-    ft_bzero(buffer, BUFFER_SIZE + 1);
-    *line = malloc(sizeof(char *) * 1);
-    *line[0] = '\0';
-    while (1)
-    {
-        if (p->reste)
-        {
-            buffer = ft_strcpy(buffer, p->reste);
-            p->reste = NULL;
-        }
-        else
-        {
-            p->nb_bytes = read(fd, buffer, BUFFER_SIZE);
-            if (p->nb_bytes == 0)
-                return (0);
-            else if (p->nb_bytes < 0)
-                return (-1);
-        }
-        rest = ft_get_rest(buffer);
-        if (rest == 0)
-            *line = ft_strjoin(*line, buffer);
-        else
-        {
-            subline = ft_get_subline(buffer);
-            *line = ft_strjoin(*line, subline);
-            p->reste = rest;
-            break;
-        }
-        if (p->nb_bytes > 0 || p->reste)
-            return (1);
+        if ((subline = ft_getline(*buffer)) == NULL)
+            return (-1);
+        if ((*line = ft_strjoin(*line, subline)) == NULL)
+            return (-1);
+        s->rest = rest;
+        free(subline);
         return (0);
     }
 }
 
-int get_next_line(int fd, char **line)
+static int     ft_rest(t_gnl *s, char **buffer, int fd, char **line)
 {
-    static t_gnl p;
     int ret;
 
-    if (fd < 0 || BUFFER_SIZE < 1)
+    ret = 0;
+    if (s->rest != NULL)
+    {
+        *buffer = ft_strcpy(*buffer, s->rest);
+        free(s->rest);
+        s->rest = NULL;
+    }
+    else
+    {
+        s->nb_bytes = read(fd, *buffer, BUFFER_SIZE);
+        if (s->nb_bytes <= 0)
+        {
+            if (s->nb_bytes == 0)
+                return (0);
+            if (s->nb_bytes < 0)
+                return (-1);
+        }
+    }
+    ret = ft_manage_rest(s, line, buffer);
+    if (ret == 0)
+		return (2);
+	if (ret == -1)
+		return (-1);
+	return (1);
+}
+
+static int     ft_read(int fd, t_gnl *s, char **line)
+{
+    char *buffer;
+    int ret;
+
+    ret = 0;
+    *line = malloc(1);
+    *line[0] = '\0';
+    if (!(buffer = malloc(BUFFER_SIZE + 1)))
         return (-1);
-    ret = ft_read(fd, &p, line);
+    ft_bzero(buffer, BUFFER_SIZE + 1);
+    while (ret != 2)
+    {
+        ret = ft_rest(s, &buffer, fd, line);
+        if (ret <= 0)
+        {
+            free(buffer);
+            return (-1);
+        }
+    }
+    free(buffer);
+    return (s->nb_bytes > 0 || s->rest) ? 1 : 0;
+}
+
+int     get_next_line(int fd, char **line)
+{
+    static t_gnl s;
+    int ret;
+
+    ret = ft_read(fd, &s, line);
     return (ret);
 }
 
-/*int main(void)
+int main(void)
 {
     int fd;
     int ret;
     char *line;
-
     fd = open("test.txt", O_RDONLY);
     if (!fd)
         return (-1);
     while ((ret = get_next_line(fd, &line)) > 0)
-    {
         printf("%d -> %s\n", ret, line);
-    }
+    printf("%d -> %s\n", ret, line);
     close(fd);
     return (0);
-}*/
+}
